@@ -1,0 +1,69 @@
+#SENTIMENT_ANALYSIS
+
+http://localhost:8890/notebooks/Task_4_Sentiment_Analysis.ipynb
+
+import pandas as pd
+import nltk
+import re
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+import pandas as pd
+data = {
+    "review": [
+        "I love this product",
+        "Worst experience ever",
+        "Very good quality",
+        "I hate this item",
+        "Excellent service",
+        "Terrible product"
+    ],
+    "sentiment": [1, 0, 1, 0, 1, 0]
+}
+df = pd.DataFrame(data)
+df
+
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+import re
+stemmer = PorterStemmer()
+stop_words = set(stopwords.words('english'))
+def preprocess(text):
+    text = text.lower()
+    text = re.sub('[^a-z]', ' ', text)
+    words = text.split()
+    words = [stemmer.stem(word) for word in words if word not in stop_words]
+    return ' '.join(words)
+df['clean_review'] = df['review'].apply(preprocess)
+df
+
+from sklearn.feature_extraction.text import CountVectorizer
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(df['clean_review'])
+y = df['sentiment']
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+from sklearn.naive_bayes import MultinomialNB
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+from sklearn.metrics import accuracy_score, classification_report
+y_pred = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+def predict_sentiment(text):
+    text = preprocess(text)
+    vector = vectorizer.transform([text])
+    result = model.predict(vector)
+    return "Positive 😊" if result[0] == 1 else "Negative 😠"
+
+predict_sentiment("This product is very bad")
